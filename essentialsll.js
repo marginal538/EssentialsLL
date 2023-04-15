@@ -503,6 +503,102 @@ class Essentials {
         return command.setup();
       }
     },
+
+    initFeedCommand: () => {
+      let command = mc.newCommand(
+        "feed",
+        "Восполнить голод",
+        PermType.GameMasters
+      );
+
+      command.optional("player", ParamType.Player);
+      command.overload(["player"]);
+      command.setCallback((_command, origin, output, result) => {
+        result.player.forEach((pl) => {
+          pl.setHungry(Number.MAX_SAFE_INTEGER);
+        });
+
+        return output.success("Вы успешно восполнили голод.");
+      });
+
+      return command.setup();
+    },
+
+    initHealCommand: () => {
+      let command = mc.newCommand(
+        "heal",
+        "Восполнить здоровье",
+        PermType.GameMasters
+      );
+
+      command.optional("player", ParamType.Player);
+      command.overload(["player"]);
+      command.setCallback((_command, origin, output, result) => {
+        result.player.forEach((pl) => {
+          pl.setHealth(pl.maxHealth);
+        });
+
+        return output.success("Вы успешно восполнили здоровье.");
+      });
+
+      return command.setup();
+    },
+
+    initWorldCommand: () => {
+      let command = mc.newCommand(
+        "world",
+        "Телепортироваться в другой мир",
+        PermType.GameMasters
+      );
+
+      command.setEnum("worldsEnum", ["overworld", "nether", "end"]);
+      command.optional("world", ParamType.Enum, "worldsEnum", 1);
+      command.overload(["world"]);
+      command.setCallback((_command, origin, output, result) => {
+        let playerPos = origin.player.blockPos;
+
+        switch (result.world) {
+          default:
+          case "overworld":
+            return origin.player.teleport(
+              new IntPos(playerPos.x, playerPos.y, playerPos.z, 0)
+            );
+            break;
+          case "nether":
+            return origin.player.teleport(
+              new IntPos(playerPos.x, playerPos.y, playerPos.z, 1)
+            );
+            break;
+          case "end":
+            return origin.player.teleport(
+              new IntPos(playerPos.x, playerPos.y, playerPos.z, 2)
+            );
+            break;
+        }
+      });
+
+      return command.setup();
+    },
+
+    initFlyCommand: () => {
+      let command = mc.newCommand("fly", "Режим полета", PermType.GameMasters);
+
+      command.setEnum("toggleEnum", ["on", "off"]);
+      command.mandatory("state", ParamType.Enum, "toggleEnum", 1);
+      command.mandatory("player", ParamType.Player);
+      command.overload(["state", "player"]);
+      command.setCallback((_command, origin, output, result) => {
+        result.player.forEach((pl) => {
+          pl.setAbility(10, result.state == "on" ? true : false);
+        });
+
+        return output.success(
+          `Режим полета ${result.state == "on" ? "включен" : "выключен"}`
+        );
+      });
+
+      return command.setup();
+    },
   };
 
   static Main() {
@@ -524,6 +620,11 @@ class Essentials {
       this.Commands.initRulesCommand();
       this.Commands.initDonateCommand();
       this.Commands.initInfoCommand();
+      // Player
+      this.Commands.initFeedCommand();
+      this.Commands.initHealCommand();
+      this.Commands.initWorldCommand();
+      this.Commands.initFlyCommand();
     });
   }
 }
